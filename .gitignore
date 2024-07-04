@@ -8,3 +8,6 @@ node_modules/
 deposit-graph/target/
 migrations/
 scripts/
+
+# Other files to ignore
+.DS_Store
