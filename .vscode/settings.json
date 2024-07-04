@@ -1,0 +1,5 @@
+{
+   "solidity.compileUsingLocalVersion": "/Users/dylankawalec/Desktop/dev/DepositGraph/soljson-v0.8.20+commit.a1b79de6.js", 
+   "solidity.packageDefaultDependenciesContractsDirectory": "",
+   "solidity.packageDefaultDependenciesDirectory": "node_modules"
+}

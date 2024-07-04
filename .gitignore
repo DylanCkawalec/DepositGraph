@@ -5,9 +5,12 @@
 node_modules/
 
 # Ignore build output directories
-deposit-graph/target/
 migrations/
 scripts/
 
-# Other files to ignore
+# System files to ignore
 .DS_Store
+
+/setting-up.md
+/rust-test.md
+/notes.md

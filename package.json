@@ -1,0 +1,18 @@
+{
+  "name": "depositgraph",
+  "version": "1.0.0",
+  "main": "soljson-v0.8.20+commit.a1b79de6.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2"
+  }
+}
