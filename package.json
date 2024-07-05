@@ -14,5 +14,9 @@
   "description": "",
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2"
+  },
+  "devDependencies": {
+    "chai": "^5.1.1",
+    "ethers": "^6.13.1"
   }
 }

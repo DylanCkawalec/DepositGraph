@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { ethers } = require("ethers");
 
 const DepositGraph = artifacts.require("DepositGraph");
 
@@ -32,15 +33,12 @@ contract("DepositGraph", (accounts) => {
   });
 
   it("should not allow the same user to sign up twice", async () => {
-    try {
-      await depositGraph.signUp({ from: user1 });
-    } catch (error) {
-      expect(error.reason).to.equal("User already signed up");
-    }
+    await expect(depositGraph.signUp({ from: user1 }))
+      .to.be.revertedWith("User already signed up");
   });
 
   it("should allow users to deposit ETH and update shares", async () => {
-    const depositAmount = web3.utils.toWei("1", "ether");
+    const depositAmount = ethers.utils.parseEther("1");
     await depositGraph.deposit({ from: user1, value: depositAmount });
     const userShares = await depositGraph.shares(user1);
     expect(userShares.toNumber()).to.equal(100000);
@@ -53,15 +51,12 @@ contract("DepositGraph", (accounts) => {
     expect(userShares.toNumber()).to.equal(50000);
 
     const userBalance = await web3.eth.getBalance(user1);
-    expect(parseFloat(userBalance)).to.be.above(parseFloat(web3.utils.toWei("0.5", "ether")));
+    expect(parseFloat(userBalance)).to.be.above(parseFloat(ethers.utils.parseEther("0.5").toString()));
   });
 
   it("should not allow users to withdraw more shares than they have", async () => {
-    try {
-      await depositGraph.withdraw(100000, { from: user1 });
-    } catch (error) {
-      expect(error.reason).to.equal("Insufficient shares");
-    }
+    await expect(depositGraph.withdraw(100000, { from: user1 }))
+      .to.be.revertedWith("Insufficient shares");
   });
 
   it("should allow the admin to update shares with blobUpdate", async () => {
@@ -76,11 +71,8 @@ contract("DepositGraph", (accounts) => {
   });
 
   it("should not allow non-admin users to update shares with blobUpdate", async () => {
-    try {
-      const blob = "1x50000z2y100000";
-      await depositGraph.blobUpdate(blob, { from: user1 });
-    } catch (error) {
-      expect(error.reason).to.equal("Only admin can call this function");
-    }
+    const blob = "1x50000z2y100000";
+    await expect(depositGraph.blobUpdate(blob, { from: user1 }))
+      .to.be.revertedWith("Only admin can call this function");
   });
 });

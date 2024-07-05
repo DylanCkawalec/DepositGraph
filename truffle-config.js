@@ -1,7 +1,13 @@
 require('dotenv').config();
-const HDWalletProvider = require('@truffle/hdwallet-provider');
+const { ethers } = require("ethers");
 
-const { MNEMONIC, DRPC_API_KEY } = process.env;
+const { PRIVATE_KEY, DRPC_API_KEY } = process.env;
+
+function createProvider(url) {
+  const provider = new ethers.providers.JsonRpcProvider(url);
+  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  return wallet;
+}
 
 module.exports = {
   networks: {
@@ -11,32 +17,36 @@ module.exports = {
       network_id: "*",
     },
     ethereumSepolia: {
-      provider: () => new HDWalletProvider(MNEMONIC, `https://lb.drpc.org/ogrpc?network=sepolia&dkey=${DRPC_API_KEY}`),
+      provider: () => createProvider(`https://lb.drpc.org/ogrpc?network=sepolia&dkey=${DRPC_API_KEY}`),
       network_id: 11155111,
       confirmations: 2,
       timeoutBlocks: 200,
-      skipDryRun: true
+      skipDryRun: true,
+      gasPrice: 20000000000, // 20 Gwei
     },
     baseSepolia: {
-      provider: () => new HDWalletProvider(MNEMONIC, `https://lb.drpc.org/ogrpc?network=base-sepolia&dkey=${DRPC_API_KEY}`),
+      provider: () => createProvider(`https://lb.drpc.org/ogrpc?network=base-sepolia&dkey=${DRPC_API_KEY}`),
       network_id: 84532,
       confirmations: 2,
       timeoutBlocks: 200,
-      skipDryRun: true
+      skipDryRun: true,
+      gasPrice: 20000000000,
     },
     optimismSepolia: {
-      provider: () => new HDWalletProvider(MNEMONIC, `https://lb.drpc.org/ogrpc?network=optimism-sepolia&dkey=${DRPC_API_KEY}`),
+      provider: () => createProvider(`https://lb.drpc.org/ogrpc?network=optimism-sepolia&dkey=${DRPC_API_KEY}`),
       network_id: 11155420,
       confirmations: 2,
       timeoutBlocks: 200,
-      skipDryRun: true
+      skipDryRun: true,
+      gasPrice: 20000000000,
     },
     mantaPacificSepolia: {
-      provider: () => new HDWalletProvider(MNEMONIC, `https://lb.drpc.org/ogrpc?network=manta-pacific-sepolia&dkey=${DRPC_API_KEY}`),
+      provider: () => createProvider(`https://lb.drpc.org/ogrpc?network=manta-pacific-sepolia&dkey=${DRPC_API_KEY}`),
       network_id: 3441005,
       confirmations: 2,
       timeoutBlocks: 200,
-      skipDryRun: true
+      skipDryRun: true,
+      gasPrice: 20000000000,
     }
   },
   compilers: {
