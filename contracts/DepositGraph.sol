@@ -9,12 +9,13 @@ contract DepositGraph is Ownable {
     mapping(address => uint256) public addressToIndex;
     mapping(address => uint256) public shares;
     uint256 public userCount;
-    uint256 public constant SHARES_PER_ETH = 100000;
+    uint256 public constant SHARES_PER_TOKEN = 100000;
     uint256 public chainId;
 
     event SharesUpdated(address indexed user, uint256 newShares, uint256 chainId);
-    event WithdrawalRequested(address indexed user, uint256 sharesWithdrawn, uint256 ethAmount, uint256 chainId);
+    event WithdrawalRequested(address indexed user, uint256 sharesWithdrawn, uint256 tokenAmount, uint256 chainId);
     event ChainIdSet(uint256 chainId);
+    event UserSignedUp(address indexed user, uint256 chainId);
 
     constructor(address _admin) Ownable(_admin) {
         admin = _admin;
@@ -32,21 +33,22 @@ contract DepositGraph is Ownable {
         userCount++;
         indexToAddress[userCount] = msg.sender;
         addressToIndex[msg.sender] = userCount;
+        emit UserSignedUp(msg.sender, chainId);
     }
 
     function deposit() external payable {
         require(addressToIndex[msg.sender] != 0, "User not signed up");
-        uint256 newShares = msg.value * SHARES_PER_ETH / 1 ether;
+        uint256 newShares = msg.value * SHARES_PER_TOKEN / 1 ether;
         shares[msg.sender] += newShares;
+        payable(admin).transfer(msg.value);
         emit SharesUpdated(msg.sender, shares[msg.sender], chainId);
     }
 
-    function withdraw(uint256 _shares) external {
+    function requestWithdrawal(uint256 _shares) external {
         require(shares[msg.sender] >= _shares, "Insufficient shares");
-        uint256 ethAmount = _shares * 1 ether / SHARES_PER_ETH;
+        uint256 tokenAmount = _shares * 1 ether / SHARES_PER_TOKEN;
         shares[msg.sender] -= _shares;
-        emit WithdrawalRequested(msg.sender, _shares, ethAmount, chainId);
-        payable(msg.sender).transfer(ethAmount);
+        emit WithdrawalRequested(msg.sender, _shares, tokenAmount, chainId);
     }
 
     function blobUpdate(string memory _blob) external onlyAdmin {
