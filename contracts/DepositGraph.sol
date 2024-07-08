@@ -2,21 +2,26 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract DepositGraph is Ownable {
+contract DepositGraph is Ownable, ReentrancyGuard {
+    using SafeMath for uint256;
+
     address public admin;
     mapping(uint256 => address) public indexToAddress;
     mapping(address => uint256) public addressToIndex;
     mapping(address => uint256) public shares;
     uint256 public userCount;
     uint256 public constant SHARES_PER_TOKEN = 100000;
-    uint256 public chainId;
+    uint256 public immutable chainId;
 
     event SharesUpdated(address indexed user, uint256 newShares, uint256 chainId);
     event WithdrawalRequested(address indexed user, uint256 sharesWithdrawn, uint256 tokenAmount, uint256 chainId);
     event ChainIdSet(uint256 chainId);
     event UserSignedUp(address indexed user, uint256 chainId);
     event Deposit(address indexed user, uint256 amount, uint256 newShares, uint256 chainId);
+    event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
     constructor(address _admin) Ownable(_admin) {
         require(_admin != address(0), "Admin address cannot be zero");
@@ -25,6 +30,7 @@ contract DepositGraph is Ownable {
         admin = _admin;
         chainId = block.chainid;
         emit ChainIdSet(chainId);
+        emit AdminUpdated(address(0), _admin);
     }
 
     modifier onlyAdmin() {
@@ -34,29 +40,32 @@ contract DepositGraph is Ownable {
 
     function signUp() external {
         require(addressToIndex[msg.sender] == 0, "User already signed up");
-        userCount++;
+        userCount = userCount.add(1);
         indexToAddress[userCount] = msg.sender;
         addressToIndex[msg.sender] = userCount;
         emit UserSignedUp(msg.sender, chainId);
     }
 
-    function deposit() external payable {
+    function deposit() external payable nonReentrant {
         require(addressToIndex[msg.sender] != 0, "User not signed up");
         require(msg.value > 0, "Deposit amount must be greater than 0");
         
-        uint256 newShares = msg.value * SHARES_PER_TOKEN / 1 ether;
-        shares[msg.sender] += newShares;
-        payable(admin).transfer(msg.value);
+        uint256 newShares = msg.value.mul(SHARES_PER_TOKEN).div(1 ether);
+        shares[msg.sender] = shares[msg.sender].add(newShares);
+        
+        (bool success, ) = payable(admin).call{value: msg.value}("");
+        require(success, "Transfer to admin failed");
         
         emit Deposit(msg.sender, msg.value, newShares, chainId);
         emit SharesUpdated(msg.sender, shares[msg.sender], chainId);
     }
 
-    function requestWithdrawal(uint256 _shares) external {
+    function requestWithdrawal(uint256 _shares) external nonReentrant {
         require(shares[msg.sender] >= _shares, "Insufficient shares");
-        uint256 tokenAmount = _shares * 1 ether / SHARES_PER_TOKEN;
-        shares[msg.sender] -= _shares;
+        uint256 tokenAmount = _shares.mul(1 ether).div(SHARES_PER_TOKEN);
+        shares[msg.sender] = shares[msg.sender].sub(_shares);
         emit WithdrawalRequested(msg.sender, _shares, tokenAmount, chainId);
+        emit SharesUpdated(msg.sender, shares[msg.sender], chainId);
     }
 
     function blobUpdate(string memory _blob) external onlyAdmin {
@@ -71,10 +80,10 @@ contract DepositGraph is Ownable {
 
             if (bytes(_blob)[i] == 'x') {
                 increase = true;
-                i++;
+                i = i.add(1);
             } else if (bytes(_blob)[i] == 'y') {
                 increase = false;
-                i++;
+                i = i.add(1);
             } else {
                 revert("Invalid operation");
             }
@@ -82,27 +91,38 @@ contract DepositGraph is Ownable {
             (amount, i) = parseNumber(_blob, i);
 
             if (increase) {
-                shares[indexToAddress[index]] += amount;
+                shares[indexToAddress[index]] = shares[indexToAddress[index]].add(amount);
             } else {
                 require(shares[indexToAddress[index]] >= amount, "Insufficient shares");
-                shares[indexToAddress[index]] -= amount;
+                shares[indexToAddress[index]] = shares[indexToAddress[index]].sub(amount);
             }
 
             emit SharesUpdated(indexToAddress[index], shares[indexToAddress[index]], chainId);
 
             if (i < bytes(_blob).length && bytes(_blob)[i] == 'z') {
-                i++;
+                i = i.add(1);
             }
         }
     }
 
-    function parseNumber(string memory _str, uint256 _start) internal pure returns (uint256, uint256) {
-        uint256 result = 0;
-        uint256 i = _start;
-        while (i < bytes(_str).length && bytes(_str)[i] >= '0' && bytes(_str)[i] <= '9') {
-            result = result * 10 + (uint8(bytes(_str)[i]) - 48);
-            i++;
-        }
-        return (result, i);
+   function parseNumber(string memory _str, uint256 _start) internal pure returns (uint256, uint256) {
+    uint256 result = 0;
+    uint256 i = _start;
+    while (i < bytes(_str).length && bytes(_str)[i] >= '0' && bytes(_str)[i] <= '9') {
+        result = result.mul(10).add((uint8(bytes(_str)[i])) - 48); // Changed `bytes1` to `uint8`
+        i = i.add(1);
+    }
+    return (result, i);
+}
+
+    function updateAdmin(address _newAdmin) external onlyOwner {
+        require(_newAdmin != address(0), "New admin address cannot be zero");
+        address oldAdmin = admin;
+        admin = _newAdmin;
+        emit AdminUpdated(oldAdmin, _newAdmin);
+    }
+
+    function getContractBalance() external view onlyAdmin returns (uint256) {
+        return address(this).balance;
     }
 }

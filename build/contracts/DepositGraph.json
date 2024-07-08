@@ -12601,9 +12601,16 @@
     "name": "solc",
     "version": "0.8.20+commit.a1b79de6.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "11155111": {
+      "events": {},
+      "links": {},
+      "address": "0xF0641d75e6D4c9025824c2cF41def3dd0BD059bf"
+    }
+  },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-07-08T03:39:30.160Z",
+  "updatedAt": "2024-07-08T03:42:07.186Z",
+  "networkType": "ethereum",
   "devdoc": {
     "errors": {
       "OwnableInvalidOwner(address)": [
