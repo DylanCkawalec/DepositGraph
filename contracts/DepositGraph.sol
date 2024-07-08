@@ -16,13 +16,16 @@ contract DepositGraph is Ownable {
     event WithdrawalRequested(address indexed user, uint256 sharesWithdrawn, uint256 tokenAmount, uint256 chainId);
     event ChainIdSet(uint256 chainId);
     event UserSignedUp(address indexed user, uint256 chainId);
+    event Deposit(address indexed user, uint256 amount, uint256 newShares, uint256 chainId);
 
     constructor(address _admin) Ownable(_admin) {
-    require(_admin != address(0), "Admin address cannot be zero");
-    admin = _admin;
-    chainId = block.chainid;
-    emit ChainIdSet(chainId);
-}
+        require(_admin != address(0), "Admin address cannot be zero");
+        require(msg.sender != address(0), "Deployer address cannot be zero");
+        require(_admin == msg.sender, "Admin must be the deployer");
+        admin = _admin;
+        chainId = block.chainid;
+        emit ChainIdSet(chainId);
+    }
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "Only admin can call this function");
@@ -39,9 +42,13 @@ contract DepositGraph is Ownable {
 
     function deposit() external payable {
         require(addressToIndex[msg.sender] != 0, "User not signed up");
+        require(msg.value > 0, "Deposit amount must be greater than 0");
+        
         uint256 newShares = msg.value * SHARES_PER_TOKEN / 1 ether;
         shares[msg.sender] += newShares;
         payable(admin).transfer(msg.value);
+        
+        emit Deposit(msg.sender, msg.value, newShares, chainId);
         emit SharesUpdated(msg.sender, shares[msg.sender], chainId);
     }
 

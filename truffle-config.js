@@ -22,23 +22,17 @@ function createProvider(url) {
         callback(error);
       }
     },
-    sendAsync: (payload, callback) => {
+    sendAsync: function(payload, callback) {
       this.send(payload, callback);
     }
   };
 }
 
-// Get the address from the private key
 const wallet = new ethers.Wallet(PRIVATE_KEY);
 const FROM_ADDRESS = wallet.address;
 
 module.exports = {
   networks: {
-    development: {
-      host: "127.0.0.1",
-      port: 7545,
-      network_id: "*",
-    },
     ethereumSepolia: {
       provider: () => createProvider(`https://sepolia.drpc.org/v1/${DRPC_API_KEY}`),
       network_id: 11155111,
@@ -47,7 +41,7 @@ module.exports = {
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
-      from: FROM_ADDRESS, // Add this line
+      from: FROM_ADDRESS,
     },
     baseSepolia: {
       provider: () => createProvider(`https://base-sepolia.drpc.org/v1/${DRPC_API_KEY}`),
