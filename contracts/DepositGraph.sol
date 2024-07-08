@@ -46,20 +46,20 @@ contract DepositGraph is Ownable, ReentrancyGuard {
         emit UserSignedUp(msg.sender, chainId);
     }
 
-    function deposit(uint256 _amount) external payable nonReentrant {
-        require(addressToIndex[msg.sender] != 0, "User not signed up");
-        require(msg.value == _amount, "Sent value does not match the specified amount");
-        require(_amount > 0, "Deposit amount must be greater than 0");
-        
-        uint256 newShares = _amount.mul(SHARES_PER_TOKEN).div(1 ether);
-        shares[msg.sender] = shares[msg.sender].add(newShares);
-        
-        (bool success, ) = payable(admin).call{value: _amount}("");
-        require(success, "Transfer to admin failed");
-        
-        emit Deposit(msg.sender, _amount, newShares, chainId);
-        emit SharesUpdated(msg.sender, shares[msg.sender], chainId);
-    }
+   function deposit(uint256 _amountWei) external payable nonReentrant {
+    require(addressToIndex[msg.sender] != 0, "User not signed up");
+    require(msg.value == _amountWei, "Sent value does not match the specified amount");
+    require(_amountWei > 0, "Deposit amount must be greater than 0");
+    
+    uint256 newShares = (_amountWei * SHARES_PER_TOKEN) / 1 ether;
+    shares[msg.sender] = shares[msg.sender] + newShares;
+    
+    (bool success, ) = payable(admin).call{value: _amountWei}("");
+    require(success, "Transfer to admin failed");
+    
+    emit Deposit(msg.sender, _amountWei, newShares, chainId);
+    emit SharesUpdated(msg.sender, shares[msg.sender], chainId);
+}
 
     function requestWithdrawal(uint256 _shares) external nonReentrant {
         require(shares[msg.sender] >= _shares, "Insufficient shares");
