@@ -6,7 +6,7 @@ const { PRIVATE_KEY, DRPC_API_KEY } = process.env;
 function createProvider(url) {
   const provider = new ethers.JsonRpcProvider(url);
   const signer = new ethers.Wallet(PRIVATE_KEY, provider);
-  
+ 
   return {
     send: async (payload, callback) => {
       try {
@@ -49,7 +49,7 @@ module.exports = {
       gas: 5000000,
       gasPrice: 20000000000,
       confirmations: 2,
-      timeoutBlocks: 200,
+      timeoutBlocks: 400,
       skipDryRun: true,
       from: FROM_ADDRESS, // Add this line
     },
@@ -59,7 +59,7 @@ module.exports = {
       gas: 5000000,
       gasPrice: 20000000000,
       confirmations: 2,
-      timeoutBlocks: 200,
+      timeoutBlocks: 400,
       skipDryRun: true,
       from: FROM_ADDRESS, // Add this line
     },
