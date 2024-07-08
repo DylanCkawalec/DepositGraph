@@ -18,10 +18,11 @@ contract DepositGraph is Ownable {
     event UserSignedUp(address indexed user, uint256 chainId);
 
     constructor(address _admin) Ownable(_admin) {
-        admin = _admin;
-        chainId = block.chainid;
-        emit ChainIdSet(chainId);
-    }
+    require(_admin != address(0), "Admin address cannot be zero");
+    admin = _admin;
+    chainId = block.chainid;
+    emit ChainIdSet(chainId);
+}
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "Only admin can call this function");
