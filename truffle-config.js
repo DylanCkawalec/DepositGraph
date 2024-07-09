@@ -1,7 +1,7 @@
 require('dotenv').config();
 const ethers = require("ethers");
 
-const { PRIVATE_KEY, DRPC_API_KEY } = process.env;
+const { PRIVATE_KEY, DRPC_API_KEY, ETHEREUM_SEPOLIA_RPC_URL, BASE_SEPOLIA_RPC_URL, OPTIMISM_SEPOLIA_RPC_URL, MANTA_PACIFIC_SEPOLIA_RPC_URL } = process.env;
 
 function createProvider(url) {
   const provider = new ethers.JsonRpcProvider(url);
@@ -34,7 +34,7 @@ const FROM_ADDRESS = wallet.address;
 module.exports = {
   networks: {
     ethereumSepolia: {
-      provider: () => createProvider(`https://sepolia.drpc.org/v1/${DRPC_API_KEY}`),
+      provider: () => createProvider(ETHEREUM_SEPOLIA_RPC_URL),
       network_id: 11155111,
       gas: 5000000,
       gasPrice: 20000000000, // 20 Gwei
@@ -44,34 +44,34 @@ module.exports = {
       from: FROM_ADDRESS,
     },
     baseSepolia: {
-      provider: () => createProvider(`https://base-sepolia.drpc.org/v1/${DRPC_API_KEY}`),
+      provider: () => createProvider(BASE_SEPOLIA_RPC_URL),
       network_id: 84532,
       gas: 5000000,
       gasPrice: 20000000000,
       confirmations: 2,
       timeoutBlocks: 400,
       skipDryRun: true,
-      from: FROM_ADDRESS, // Add this line
+      from: FROM_ADDRESS,
     },
     optimismSepolia: {
-      provider: () => createProvider(`https://optimism-sepolia.drpc.org/v1/${DRPC_API_KEY}`),
+      provider: () => createProvider(OPTIMISM_SEPOLIA_RPC_URL),
       network_id: 11155420,
       gas: 5000000,
       gasPrice: 20000000000,
       confirmations: 2,
       timeoutBlocks: 400,
       skipDryRun: true,
-      from: FROM_ADDRESS, // Add this line
+      from: FROM_ADDRESS,
     },
     mantaPacificSepolia: {
-      provider: () => createProvider(`https://manta-pacific-sepolia.drpc.org/v1/${DRPC_API_KEY}`),
+      provider: () => createProvider(MANTA_PACIFIC_SEPOLIA_RPC_URL),
       network_id: 3441005,
       gas: 5000000,
       gasPrice: 20000000000,
       confirmations: 2,
       timeoutBlocks: 200,
       skipDryRun: true,
-      from: FROM_ADDRESS, // Add this line
+      from: FROM_ADDRESS,
     }
   },
   compilers: {
