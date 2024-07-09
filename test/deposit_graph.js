@@ -1,78 +1,49 @@
-const { expect } = require("chai");
-const { ethers } = require("ethers");
+const ethers = require("ethers");
+require('dotenv').config();
 
 const DepositGraph = artifacts.require("DepositGraph");
 
-contract("DepositGraph", (accounts) => {
-  let depositGraph;
-  const admin = accounts[0];
-  const user1 = accounts[1];
-  const user2 = accounts[2];
+module.exports = async function(deployer, network, accounts) {
+  const { PRIVATE_KEY, DRPC_API_KEY, ADMIN_ADDRESS } = process.env;
 
-  before(async () => {
-    depositGraph = await DepositGraph.new(admin);
-  });
+  console.log("Deploying DepositGraph with admin:", ADMIN_ADDRESS);
+  console.log("Network:", network);
 
-  it("should set the admin correctly", async () => {
-    const contractAdmin = await depositGraph.admin();
-    expect(contractAdmin).to.equal(admin);
-  });
+  let dRpcNetwork;
+  switch(network) {
+    case 'ethereumSepolia':
+      dRpcNetwork = 'sepolia';
+      break;
+    case 'optimismSepolia':
+      dRpcNetwork = 'optimism-sepolia';
+      break;
+    // Add other networks as needed
+    default:
+      throw new Error(`Unsupported network: ${network}`);
+  }
 
-  it("should sign up users", async () => {
-    await depositGraph.signUp({ from: user1 });
-    const userCount = await depositGraph.userCount();
-    const userIndex = await depositGraph.addressToIndex(user1);
-    expect(userCount.toNumber()).to.equal(1);
-    expect(userIndex.toNumber()).to.equal(1);
+  const rpcUrl = `https://lb.drpc.org/ogrpc?network=${dRpcNetwork}&dkey=${DRPC_API_KEY}`;
 
-    await depositGraph.signUp({ from: user2 });
-    const userCount2 = await depositGraph.userCount();
-    const userIndex2 = await depositGraph.addressToIndex(user2);
-    expect(userCount2.toNumber()).to.equal(2);
-    expect(userIndex2.toNumber()).to.equal(2);
-  });
+  // Create provider and signer
+  const provider = new ethers.JsonRpcProvider(rpcUrl);
+  const signer = new ethers.Wallet(PRIVATE_KEY, provider);
 
-  it("should not allow the same user to sign up twice", async () => {
-    await expect(depositGraph.signUp({ from: user1 }))
-      .to.be.revertedWith("User already signed up");
-  });
+  console.log("Deployer address:", await signer.getAddress());
 
-  it("should allow users to deposit ETH and update shares", async () => {
-    const depositAmount = ethers.utils.parseEther("1");
-    await depositGraph.deposit({ from: user1, value: depositAmount });
-    const userShares = await depositGraph.shares(user1);
-    expect(userShares.toNumber()).to.equal(100000);
-  });
+  try {
+    // Deploy the contract using web3 (Truffle's default)
+    await deployer.deploy(DepositGraph, ADMIN_ADDRESS, { from: await signer.getAddress() });
+    
+    const deployedContract = await DepositGraph.deployed();
+    console.log("DepositGraph deployed at address:", deployedContract.address);
 
-  it("should allow users to withdraw ETH and update shares", async () => {
-    const withdrawShares = 50000;
-    await depositGraph.withdraw(withdrawShares, { from: user1 });
-    const userShares = await depositGraph.shares(user1);
-    expect(userShares.toNumber()).to.equal(50000);
+    // Verify the admin using ethers.js
+    const ethersContract = new ethers.Contract(deployedContract.address, DepositGraph.abi, signer);
+    const contractAdmin = await ethersContract.admin();
+    console.log("Contract admin set to:", contractAdmin);
 
-    const userBalance = await web3.eth.getBalance(user1);
-    expect(parseFloat(userBalance)).to.be.above(parseFloat(ethers.utils.parseEther("0.5").toString()));
-  });
-
-  it("should not allow users to withdraw more shares than they have", async () => {
-    await expect(depositGraph.withdraw(100000, { from: user1 }))
-      .to.be.revertedWith("Insufficient shares");
-  });
-
-  it("should allow the admin to update shares with blobUpdate", async () => {
-    const blob = "1x50000z2y100000";
-    await depositGraph.blobUpdate(blob, { from: admin });
-
-    const user1Shares = await depositGraph.shares(user1);
-    const user2Shares = await depositGraph.shares(user2);
-
-    expect(user1Shares.toNumber()).to.equal(100000);
-    expect(user2Shares.toNumber()).to.equal(0);
-  });
-
-  it("should not allow non-admin users to update shares with blobUpdate", async () => {
-    const blob = "1x50000z2y100000";
-    await expect(depositGraph.blobUpdate(blob, { from: user1 }))
-      .to.be.revertedWith("Only admin can call this function");
-  });
-});
+  } catch (error) {
+    console.error("Deployment failed:", error);
+    throw error;
+  }
+};

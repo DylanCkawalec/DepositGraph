@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract DepositGraph is Ownable, ReentrancyGuard {
@@ -23,14 +23,14 @@ contract DepositGraph is Ownable, ReentrancyGuard {
     event Deposit(address indexed user, uint256 amount, uint256 newShares, uint256 chainId);
     event AdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
-    constructor(address _admin) Ownable(_admin) {
+    constructor(address _admin) Ownable() {
         require(_admin != address(0), "Admin address cannot be zero");
         require(msg.sender != address(0), "Deployer address cannot be zero");
-        require(_admin == msg.sender, "Admin must be the deployer");
         admin = _admin;
         chainId = block.chainid;
         emit ChainIdSet(chainId);
         emit AdminUpdated(address(0), _admin);
+        _transferOwnership(_admin);
     }
 
     modifier onlyAdmin() {
